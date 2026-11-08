@@ -1,6 +1,6 @@
 # Current implementation — November 8, 2026
 
-KESTREL RECALL is a playable browser rescue with a Python service and implemented provider adapters. Local gameplay and integration tests pass. Live provider/account verification and public deployment remain open.
+KESTREL RECALL is a playable Earth-to-Moon expedition including the browser rescue with a Python service and implemented provider adapters. Local gameplay and integration tests pass. Live provider/account verification and public deployment remain open.
 
 ## Playable game
 
@@ -24,10 +24,16 @@ ElevenLabs credentials/voice IDs are not configured; live voice and microphone/p
 
 ## Verification and delivery limits
 
-- 26 frontend/game tests and 22 Python tests pass. Tests cover a winning route, guarded commands, physical navigation, truthful reset memory, client proposal validation, provider protocol success/failure/timeout, delayed replies across loops, two-phase acknowledgement, duplicate IDs, SQLite restart persistence, demo isolation, body/origin/usage bounds, speech authorization/cache, and recording frame limits.
+- 32 frontend/game/campaign/hardware protocol tests and 25 Python tests pass. Tests cover a winning route, guarded commands, physical navigation, truthful reset memory, client proposal validation, provider protocol success/failure/timeout, delayed replies across loops, two-phase acknowledgement, duplicate IDs, SQLite restart persistence, demo isolation, body/origin/usage bounds, speech authorization/cache, and recording frame limits.
 - TypeScript typecheck and production build pass.
 - Browser integration checked against the actual Python service: mission-memory save status, radio request/response, honest offline mode, distinct Sam/ECHO replies, and an actual radio request to Mara that passed through Python proposal → client reducer → Python completion receipt. The earlier full rescue and movement checks remain recorded in the demo script; the current automated rescue still passes.
 - External calls in tests use mocked transports. No live Gemini or ElevenLabs success is asserted.
 - The Dockerfile and lockfiles prepare same-origin Python hosting, but container build, real-device performance, 390px/desktop breakpoint review, public deployment, actual provider latency and a backup recording remain unverified.
 
 Start with docs/backend.md for setup, docs/demo-script.md for play controls, and docs/judging-demo.md for the integration demonstration.
+
+## Connected expedition
+
+Earth launch, three interactive ISS preparation stations, successful-rescue continuation, recovery/resupply transition, Scout lunar camera mission, and a crew discovery ending are implemented. Ghost Frame snapshot `3f38071` supplies the simulation/prediction/learning/rendering foundation. Paired passes preserve separate delayed observations and private evaluation truth, reset the same seed and learner, and expose actual results with JSON export. Python stores validated anonymous campaign checkpoints and provides grounded read-only Gemini chapter guidance with labelled offline/fallback modes. Mars remains a future chapter. Physical hardware is not connected. See expedition.md for controls, source provenance, and verification scope.
+
+Browser campaign verification: Earth launch and skippable flight, all three ISS preparation checks, transition into the rescue, saved lunar resume, both delayed/predicted survey passes, validated result persistence, the discovery ending, and authored ECHO expedition guidance were exercised against the local Python service. The same-origin hardware lab and printable marker pages render; no camera permission, serial connection, loaded servo operation, or calibrated RIG performance was tested.

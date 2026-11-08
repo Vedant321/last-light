@@ -1,11 +1,11 @@
 # KESTREL RECALL
 
-> Eight minutes. Three stranded crewmates. A station that resets. An emergency AI that remembers every person you failed to save.
+> Earth is our starting point. The Moon is our next horizon. Save your crew, remember what matters, and explore through the eyes of Scout.
 
-**Status:** playable full-stack game with a Python/FastAPI backend, SQLite memory, guarded Gemini integration and optional ElevenLabs adapters. Automated checks pass; live provider credentials/verification and deployment remain pending.\
+**Status:** playable Earth → ISS → Kestrel → Moon campaign with Python/FastAPI checkpoints, SQLite memory, guarded Gemini rescue tools, read-only expedition guidance, and Ghost Frame’s adaptive camera simulation. Live provider verification, calibrated hardware integration, and deployment remain pending.\
 **Prepared:** November 8, 2026.\
 **Purpose:** give a coding agent a concrete, staged specification for a playable UB Hacking submission.\
-**Selected direction:** Kestrel Recall, a time-loop rescue aboard Kestrel Station. “Recall” connects ECHO’s persistent memory with the mission to bring everyone home. The station and AI retain their story names.
+**Current direction:** Kestrel Recall is one connected expedition: launch from Earth, prepare at the ISS, save the crew at Kestrel, then deploy Scout on the Moon. See [the campaign implementation and Ghost Frame integration](docs/expedition.md). The original station-rescue design below documents the middle chapter; its older one-station scope and return-home ending have been expanded by this campaign.
 
 ## 1. Start here, building agent
 

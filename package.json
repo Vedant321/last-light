@@ -18,9 +18,10 @@
   },
   "dependencies": {
     "@react-three/fiber": "^9.0.0",
-    "three": "^0.180.0",
+    "js-aruco2": "2.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

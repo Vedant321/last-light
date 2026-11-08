@@ -15,6 +15,7 @@ from .providers.elevenlabs import ElevenLabs
 from .dialogue import DialogueService
 from .store import Store
 from .narration import authored_lines
+from .expedition import install_expedition
 
 COOKIE='last_light_session'
 MAX_BODY=400_000
@@ -153,6 +154,8 @@ def create_app(settings: Settings | None=None, *, store: Store | None=None, tran
         except (TimeoutError,httpx.HTTPError,ValueError):raise HTTPException(502,'Transcription failed. Type your message instead.') from None
         if not repository.active(token,recording_envelope.runId,recording_envelope.loopId):raise HTTPException(409,'Stale recording')
         return {'text':text,'provider':'elevenlabs','envelope':recording_envelope.model_dump()}
+
+    install_expedition(app,repository,session,config)
 
     @app.get('/{path:path}')
     async def frontend(path: str):

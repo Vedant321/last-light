@@ -2,7 +2,7 @@ FROM node:22-bookworm-slim AS frontend
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY index.html tsconfig.json vite.config.ts ./
+COPY index.html hardware.html markers.html tsconfig.json vite.config.ts ./
 COPY src ./src
 COPY shared ./shared
 COPY tests ./tests

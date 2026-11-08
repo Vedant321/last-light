@@ -19,6 +19,7 @@ class Store:
         self.db.executescript('''
         PRAGMA journal_mode=WAL;
         CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, run TEXT, loop TEXT, revision INTEGER DEFAULT 0, loop_count INTEGER DEFAULT 0, mode TEXT DEFAULT 'normal', touched REAL, minute REAL DEFAULT 0, hits INTEGER DEFAULT 0, usage INTEGER DEFAULT 0);
+        CREATE TABLE IF NOT EXISTS expeditions (session TEXT PRIMARY KEY, data TEXT);
         CREATE TABLE IF NOT EXISTS memories (session TEXT, mode TEXT, data TEXT, PRIMARY KEY(session,mode));
         CREATE TABLE IF NOT EXISTS requests (session TEXT, id TEXT, fingerprint TEXT, response TEXT, pending TEXT, created REAL, PRIMARY KEY(session,id));
         CREATE TABLE IF NOT EXISTS speech (id TEXT PRIMARY KEY, session TEXT, run TEXT, loop TEXT, speaker TEXT, text TEXT, created REAL);
@@ -44,7 +45,7 @@ class Store:
             # Compact abandoned anonymous data. No unbounded accounts or transcripts.
             old=[r['id'] for r in db.execute('SELECT id FROM sessions WHERE touched<?',(now-30*86400,))]
             for key in old:
-                for table in ('memories','requests','speech'): db.execute(f'DELETE FROM {table} WHERE session=?',(key,))
+                for table in ('memories','requests','speech','expeditions'): db.execute(f'DELETE FROM {table} WHERE session=?',(key,))
                 db.execute('DELETE FROM sessions WHERE id=?',(key,))
             db.execute('DELETE FROM speech WHERE created<?',(now-3600,))
             db.execute('DELETE FROM requests WHERE created<?',(now-86400,))
@@ -122,8 +123,21 @@ class Store:
 
     def clear(self, session: str):
         with self.transaction() as db:
-            for table in ('memories','requests','speech'): db.execute(f'DELETE FROM {table} WHERE session=?',(session,))
+            for table in ('memories','requests','speech','expeditions'): db.execute(f'DELETE FROM {table} WHERE session=?',(session,))
             db.execute('UPDATE sessions SET run=NULL,loop=NULL,revision=0,loop_count=0 WHERE id=?',(session,))
+
+    def expedition(self, session: str) -> dict | None:
+        with self.lock:
+            row=self.db.execute('SELECT data FROM expeditions WHERE session=?',(session,)).fetchone()
+            return json.loads(row['data']) if row else None
+
+    def save_expedition(self, session: str, checkpoint: dict):
+        with self.transaction() as db:
+            current=self.expedition(session)
+            if current and current['id']==checkpoint['id']:
+                if checkpoint['revision']<current['revision']:raise ValueError('A newer campaign checkpoint is already saved')
+                if checkpoint['revision']==current['revision'] and current!=checkpoint:raise ValueError('Conflicting checkpoint revision')
+            db.execute('INSERT INTO expeditions(session,data) VALUES(?,?) ON CONFLICT(session) DO UPDATE SET data=excluded.data',(session,json.dumps(checkpoint)))
 
     @staticmethod
     def fingerprint(data: dict) -> str:
