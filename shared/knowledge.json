@@ -1,0 +1,32 @@
+{
+  "facts": [
+    "Imani needs portable oxygen before transferring Eli.",
+    "Mara can install a safe bypass; it must be rebuilt after each reset.",
+    "Portable oxygen is in the docking locker.",
+    "Shutting down the Echo Core releases 40 units and ends in-world resets.",
+    "The auxiliary battery opens Engineering; it cannot power Medical.",
+    "The maintenance cabinet holds a usable isolated 20-unit hatch battery.",
+    "The medical route and transfer support require the released 40 units."
+  ],
+  "events": [
+    "All five crew escaped Kestrel Station.",
+    "Imani and Eli reached the shuttle.",
+    "Mara completed the safe bypass.",
+    "The deadline expired with the Echo Core active.",
+    "You began the medical transfer.",
+    "You collected portable oxygen at Docking.",
+    "You delivered oxygen to Imani.",
+    "You inspected the isolated auxiliary battery.",
+    "You opened Engineering with the auxiliary battery.",
+    "You powered the medical route.",
+    "You shut down the Echo Core.",
+    "You started Mara\u2019s bypass installation.",
+    "The safe bypass was complete, but Medical had not received portable oxygen.",
+    "You delivered oxygen, but the safe bypass was incomplete.",
+    "Medical had oxygen, but the Echo Core was still active.",
+    "The Echo Core was off, but the medical route never received power.",
+    "Medical was prepared, but the patient transfer was never started.",
+    "The medical transfer was still underway when the attempt ended.",
+    "Imani and Eli reached the shuttle, but Alex had not boarded."
+  ]
+}

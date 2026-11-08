@@ -1,0 +1,35 @@
+{
+  "name": "kestrel-recall",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"uv run --frozen python -m uvicorn backend.app:create_app --factory --host 127.0.0.1 --port 3001 --reload --reload-dir backend --reload-dir shared --reload-include '*.json'\"",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "build": "tsc --noEmit && vite build",
+    "start": "uv run --frozen python -m backend",
+    "setup:backend": "uv sync --frozen",
+    "test:backend": "uv run --frozen python -m pytest",
+    "test:all": "npm test && npm run test:backend"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.0.0",
+    "three": "^0.180.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.180.0",
+    "concurrently": "^9.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.0.0"
+  }
+}

@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {initial,reduce} from '../src/game/state';
+import {applyProposal,envelope,type Proposal} from '../src/services/contracts';
+const bypass:Proposal={name:'request_engineer_bypass',action:'bypass'};
+const power:Proposal={name:'set_medical_power',action:'power'};
+test('AI cannot start a repair through a closed hatch or from across the station',()=>{let s=initial();assert.equal(applyProposal(s,bypass,{x:300,y:455},envelope(s)).accepted,false);s={...s,battery:'installed',place:'engineering'};assert.equal(applyProposal(s,bypass,{x:800,y:490},envelope(s)).accepted,false);assert.equal(applyProposal(s,bypass,{x:300,y:455},envelope(s)).accepted,true)});
+test('remote power uses the reducer while preserving player location',()=>{let s=initial();s={...s,core:false,bypass:0};const result=applyProposal(s,power,{x:800,y:490},envelope(s));assert.equal(result.accepted,true);assert.equal(result.state.route,true);assert.equal(result.state.place,'hub');assert.equal(s.route,false)});
+test('AI proposal from an old loop cannot change the new loop',()=>{const old=initial();const fresh=reduce(old,{type:'reset'});const result=applyProposal(fresh,power,{x:800,y:490},envelope(old));assert.equal(result.state,fresh);assert.equal(result.accepted,false)});
+test('duplicate accepted tool IDs never start a second installation',()=>{let s=initial();s={...s,battery:'installed',place:'engineering'};const e=envelope(s);const first=applyProposal(s,bypass,{x:300,y:455},e);const second=applyProposal(first.state,bypass,{x:300,y:455},e);assert.equal(second.accepted,false);assert.equal(second.state,first.state)});
+test('unsupported action names cannot smuggle shutdown into a safe tool',()=>{const s=initial();const invalid={name:'set_medical_power',action:'shutdown'} as unknown as Proposal;assert.equal(applyProposal(s,invalid,{x:905,y:400},envelope(s)).accepted,false)});

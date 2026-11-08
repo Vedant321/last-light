@@ -1,0 +1,62 @@
+{
+  "line_01": {
+    "speaker": "MARA",
+    "text": "Engineering hatch has no power. Communications, can you hear me? Inspect the maintenance cabinet beside your terminal."
+  },
+  "line_02": {
+    "speaker": "MARA",
+    "text": "Bypass secured. I’m heading to the shuttle. Echo Core shutdown is now available at Communications."
+  },
+  "line_03": {
+    "speaker": "SAM",
+    "text": "Mara is aboard. Still waiting for Medical and you."
+  },
+  "line_04": {
+    "speaker": "IMANI",
+    "text": "Eli is stable. We’re both aboard. Alex, come home."
+  },
+  "line_05": {
+    "speaker": "ECHO",
+    "text": "A usable auxiliary battery. Its isolated 20-unit circuit can power the Engineering hatch."
+  },
+  "line_06": {
+    "speaker": "ECHO",
+    "text": "Battery collected. Take it to the Engineering hatch socket."
+  },
+  "line_07": {
+    "speaker": "MARA",
+    "text": "Hatch is open. Come in. I can build a safe bypass for Medical."
+  },
+  "line_08": {
+    "speaker": "MARA",
+    "text": "Installing the bypass. Get oxygen from Docking to Imani while I work."
+  },
+  "line_09": {
+    "speaker": "SAM",
+    "text": "Portable oxygen collected. Imani can receive it through the Medical transfer port."
+  },
+  "line_10": {
+    "speaker": "IMANI",
+    "text": "Oxygen received. Eli is ready. We still need power for the door and transfer support."
+  },
+  "line_11": {
+    "speaker": "ECHO",
+    "text": "Echo Core offline. Forty units released. I’m still with you, Alex. There will be no further rewind."
+  },
+  "line_12": {
+    "speaker": "ECHO",
+    "text": "Medical door open. Route lighting: 20. Transfer support: 20. Ready for patient transfer."
+  },
+  "line_13": {
+    "speaker": "IMANI",
+    "text": "Moving Eli now. Keep the route powered. Meet us at the shuttle."
+  },
+  "line_14": {
+    "speaker": "SAM",
+    "text": "Alex aboard. Check the crew manifest before launch."
+  },
+  "line_15": {
+    "speaker": "ECHO",
+    "text": "All crew accounted for."
+  }
+}
