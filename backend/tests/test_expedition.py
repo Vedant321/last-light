@@ -6,10 +6,10 @@ from backend.app import create_app
 
 
 def checkpoint():
-    return {'schemaVersion':1,'id':'expedition-1','revision':0,'chapter':'earth','checks':[],'crew':[],'loops':0,'participant':1,'results':[]}
+    return {'schemaVersion':2,'id':'expedition-1','revision':0,'chapter':'earth','checks':[],'crew':[],'loops':0,'participant':1,'results':[],'surfaceSites':[],'roverDeployed':False,'returnedToISS':False}
 
 def lunar():
-    return {**checkpoint(),'chapter':'lunar','revision':6,'checks':['power','oxygen','rover'],'crew':['player','engineer','medic','patient','pilot'],'loops':2}
+    return {**checkpoint(),'chapter':'monitor','surfaceSites':['ridge','outpost'],'roverDeployed':True,'returnedToISS':True,'revision':6,'checks':['power','oxygen','rover'],'crew':['player','engineer','medic','patient','pilot'],'loops':2}
 
 def result(condition='LAG_ONLY'):
     return {'condition':condition,'outcome':'SUCCESS','timeMs':10000,'overshoots':1,'reversals':2,'targets':[-20,20],'perTargetMs':[4000,4700]}
@@ -21,7 +21,7 @@ def test_checkpoint_persistence_isolation_and_stale_revisions(settings):
         assert c.post('/api/expedition',json={**s,'revision':1}).status_code==409
         cookies=dict(c.cookies)
     with TestClient(create_app(settings)) as c:
-        c.cookies.update(cookies);assert c.get('/api/expedition').json()['expedition']['chapter']=='lunar'
+        c.cookies.update(cookies);assert c.get('/api/expedition').json()['expedition']['chapter']=='monitor'
         c.cookies.clear();c.get('/api/session');assert c.get('/api/expedition').json()['expedition'] is None
 
 def test_checkpoint_rejects_unearned_ending_duplicate_crew_and_fake_success(settings):
@@ -36,7 +36,7 @@ def test_checkpoint_rejects_unearned_ending_duplicate_crew_and_fake_success(sett
 def test_advice_offline_live_and_provider_failure(settings):
     with TestClient(create_app(settings)) as c:
         c.get('/api/session');c.post('/api/expedition',json=lunar())
-        r=c.post('/api/expedition/advice',json={'message':'What next?','chapter':'lunar'}).json()
+        r=c.post('/api/expedition/advice',json={'message':'What next?','chapter':'monitor'}).json()
         assert r['mode']=='offline' and 'Prediction' in r['text']
         assert c.post('/api/expedition/advice',json={'message':'What next?','chapter':'ending'}).status_code==409
     settings.gemini_api_key='test-secret';settings.gemini_model='account-model'
@@ -45,10 +45,29 @@ def test_advice_offline_live_and_provider_failure(settings):
         assert 'tools' not in body
         context=json.loads(body['contents'][0]['parts'][0]['text'])
         assert context['mission']['physicalHardware'].startswith('not integrated')
-        assert context['mission']['checkpoint']['chapter']=='lunar'
+        assert context['mission']['checkpoint']['chapter']=='monitor'
         return httpx.Response(200,json={'candidates':[{'content':{'parts':[{'text':'Centre beacon A and wait for its delayed confirmation.'}]}}]})
     with TestClient(create_app(settings,transport=httpx.MockTransport(provider))) as c:
         c.get('/api/session');c.post('/api/expedition',json=lunar())
-        r=c.post('/api/expedition/advice',json={'message':'Help aim','chapter':'lunar'}).json();assert r['mode']=='live'
+        r=c.post('/api/expedition/advice',json={'message':'Help aim','chapter':'monitor'}).json();assert r['mode']=='live'
     with TestClient(create_app(settings,transport=httpx.MockTransport(lambda _:httpx.Response(503)))) as c:
         c.get('/api/session');r=c.post('/api/expedition/advice',json={'message':'Help','chapter':'earth'}).json();assert r['mode']=='fallback'
+
+
+def test_remote_monitoring_requires_deployment_and_return_and_migrates_legacy(settings):
+    from backend.store import Store
+    from backend.app import COOKIE
+    store=Store(settings.database_path)
+    with TestClient(create_app(settings,store=store)) as c:
+        c.get('/api/session')
+        for bad in [{**lunar(),'roverDeployed':False},{**lunar(),'returnedToISS':False},{**lunar(),'surfaceSites':['ridge']}]:
+            assert c.post('/api/expedition',json=bad).status_code==422
+        legacy={**lunar(),'schemaVersion':1,'chapter':'lunar','results':[result()]}
+        for key in ('surfaceSites','roverDeployed','returnedToISS'):legacy.pop(key)
+        store.save_expedition(c.cookies.get(COOKIE),legacy)
+        upgraded=c.get('/api/expedition').json()['expedition']
+        assert upgraded['schemaVersion']==2 and upgraded['chapter']=='monitor'
+        assert upgraded['returnedToISS'] and upgraded['roverDeployed']
+        assert upgraded['revision']==legacy['revision']+1
+        assert c.post('/api/expedition',json=upgraded).status_code==200
+    store.close()

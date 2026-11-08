@@ -11,7 +11,7 @@ from fastapi import HTTPException, Request
 from pydantic import Field, model_validator
 from .models import StrictModel
 
-Chapter=Literal['earth','launch','iss','kestrel','transit','lunar','ending']
+Chapter=Literal['earth','launch','iss','kestrel','transit','lunar','return','monitor','ending']
 CREW={'player','engineer','medic','patient','pilot'}
 
 class SurveyResult(StrictModel):
@@ -32,7 +32,7 @@ class SurveyResult(StrictModel):
         return self
 
 class Expedition(StrictModel):
-    schemaVersion: Literal[1]=1
+    schemaVersion: Literal[2]=2
     id: str = Field(min_length=1,max_length=80,pattern=r'^[a-zA-Z0-9_-]+$')
     revision: int = Field(ge=0,le=1000000)
     chapter: Chapter
@@ -42,12 +42,31 @@ class Expedition(StrictModel):
     participant: int = Field(ge=1,le=100000)
     results: list[SurveyResult] = Field(max_length=12)
 
+    surfaceSites: list[Literal['ridge','outpost']] = Field(default_factory=list,max_length=2)
+    roverDeployed: bool = False
+    returnedToISS: bool = False
+
+    @model_validator(mode='before')
+    @classmethod
+    def migrate(cls,value):
+        if isinstance(value,dict) and value.get('schemaVersion')==1:
+            value=dict(value)
+            progressed=value.get('chapter')=='ending' or (value.get('chapter')=='lunar' and bool(value.get('results')))
+            value.update(schemaVersion=2,surfaceSites=['ridge','outpost'] if progressed else [],roverDeployed=progressed,returnedToISS=progressed)
+            if value.get('chapter')=='lunar' and progressed:value['chapter']='monitor'
+        return value
+
     @model_validator(mode='after')
     def coherent(self):
+        if len(set(self.surfaceSites))!=len(self.surfaceSites):raise ValueError('Duplicate surface site')
+        if self.returnedToISS and not self.roverDeployed:raise ValueError('Deploy Scout before returning')
+        if self.roverDeployed and len(self.surfaceSites)!=2:raise ValueError('Survey both surface sites before deploying Scout')
+        if self.chapter in ('return','monitor','ending') and not self.roverDeployed:raise ValueError('Scout must stay at its outpost')
+        if self.chapter in ('monitor','ending') and not self.returnedToISS:raise ValueError('Return to the ISS before remote monitoring')
         if len(set(self.checks))!=len(self.checks) or len(set(self.crew))!=len(self.crew):raise ValueError('Duplicate preparation or crew')
-        if self.chapter in ('kestrel','transit','lunar','ending') and len(self.checks)!=3:raise ValueError('Complete ISS preparation first')
-        if self.chapter in ('transit','lunar','ending') and (set(self.crew)!=CREW or self.loops<1):raise ValueError('Recover all crew before exploration')
-        if self.results and self.chapter not in ('lunar','ending'):raise ValueError('Survey belongs to the lunar chapter')
+        if self.chapter in ('kestrel','transit','lunar','return','monitor','ending') and len(self.checks)!=3:raise ValueError('Complete ISS preparation first')
+        if self.chapter in ('transit','lunar','return','monitor','ending') and (set(self.crew)!=CREW or self.loops<1):raise ValueError('Recover all crew before exploration')
+        if self.results and self.chapter not in ('monitor','ending'):raise ValueError('Remote survey belongs to the ISS monitoring chapter')
         expected=[-20,20] if self.participant%2 else [20,-20]
         if any(r.targets!=expected for r in self.results):raise ValueError('Keep the paired target sequence fixed')
         if self.chapter=='ending' and not all(any(r.condition==c and r.outcome=='SUCCESS' for r in self.results) for c in ('LAG_ONLY','PREDICTION')):raise ValueError('Confirm both survey passes before ending')
@@ -64,14 +83,25 @@ GUIDANCE={
  'iss':'Walk to each highlighted preparation station and confirm its check. Flight power, oxygen, and Scout must all be ready before we leave.',
  'kestrel':'The debris strike has isolated the crew. Use the station radio for current rescue telemetry and guarded repair commands; expedition guidance cannot operate station controls.',
  'transit':'All five crew escaped Kestrel. After recovery and resupply, deploy Scout on the Moon to acquire the two research beacons.',
- 'lunar':'Centre the requested beacon with the camera slider and hold within two degrees for one second. Both commands and confirmations arrive late. Prediction estimates motion; it does not supply unseen images or remove transmission delay.',
- 'ending':'The crew is safe and both lunar survey passes are confirmed. Review your measured comparison or begin another expedition; Mars is a future chapter.',
+ 'lunar':'Walk with Scout to the ridge, confirm the site observation, then prepare its research outpost. Leave Scout gathering data and return with the crew to the ISS.',
+ 'return':'Scout remains at the lunar outpost. Bring the crew back to the ISS to monitor its camera over the delayed link.',
+ 'monitor':'Centre the requested beacon with the camera slider and hold within two degrees for one second. Both commands and confirmations arrive late. Prediction estimates motion; it does not supply unseen images or remove transmission delay.',
+ 'ending':'All five crew are safely back at the ISS. Scout remains on the Moon gathering data; both remote survey passes are confirmed. Review the measured comparison or begin another expedition. Mars is a future chapter.',
 }
 
 def install_expedition(app,repository,session,config):
+    def load_checkpoint(token):
+        checkpoint=repository.expedition(token)
+        if checkpoint and checkpoint.get('schemaVersion')==1:
+            upgraded=Expedition.model_validate(checkpoint).model_dump()
+            upgraded['revision']=checkpoint['revision']+1
+            repository.save_expedition(token,upgraded)
+            return upgraded
+        return checkpoint
+
     @app.get('/api/expedition')
     async def checkpoint(request: Request):
-        return {'expedition':repository.expedition(session(request))}
+        return {'expedition':load_checkpoint(session(request))}
 
     @app.post('/api/expedition')
     async def save(body: Expedition,request: Request):
@@ -82,7 +112,7 @@ def install_expedition(app,repository,session,config):
     @app.post('/api/expedition/advice')
     async def advice(body: AdviceRequest,request: Request):
         token=session(request)
-        checkpoint=repository.expedition(token)
+        checkpoint=load_checkpoint(token)
         chapter=checkpoint['chapter'] if checkpoint else 'earth'
         if chapter!=body.chapter:raise HTTPException(409,'Save the current checkpoint before requesting guidance')
         fallback=GUIDANCE[chapter]

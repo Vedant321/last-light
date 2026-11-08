@@ -56,7 +56,7 @@ export function reduce(s:State,c:Command):State {
   if(c.dt>1){let next=s;let remaining=c.dt;while(remaining>0&&next.loopId===s.loopId&&next.phase==='playing'){const step=Math.min(remaining,1);next=reduce(next,{type:'tick',dt:step});remaining-=step;}return next;}
   const dt=c.dt; const n={...s,remaining:Math.max(0,s.remaining-dt),revision:s.revision+1,aboard:[...s.aboard]};
   if(s.travel){n.travel={...s.travel,remaining:Math.max(0,s.travel.remaining-dt)};if(n.travel.remaining===0){n.place=n.travel.to;n.travel=null;}}
-  if(s.bypass!==null&&s.bypass>0){n.bypass=Math.max(0,s.bypass-dt);if(n.bypass===0){n.engineerTravel=s.mode==='demo'?3:10;n.events=[...s.events,'Mara completed the safe bypass.'];n.message=missionLine('line_02');}}
+  if(s.bypass!==null&&s.bypass>0){n.bypass=Math.max(0,s.bypass-dt);if(n.bypass===0){n.engineerTravel=s.mode==='demo'?2:6;n.events=[...s.events,'Mara completed the safe bypass.'];n.message=missionLine('line_02');}}
   if(s.engineerTravel!==null&&s.engineerTravel>0){n.engineerTravel=Math.max(0,s.engineerTravel-dt);if(n.engineerTravel===0&&!n.aboard.includes('engineer')){n.aboard.push('engineer');n.message=missionLine('line_03');}}
   if(s.transfer!==null&&s.transfer>0){n.transfer=Math.max(0,s.transfer-dt);if(n.transfer===0){n.aboard.push('medic','patient');n.events=[...n.events,'Imani and Eli reached the shuttle.'];n.message=missionLine('line_04');}}
   if(n.remaining===0){if(n.core)return reset({...n,events:[...n.events,'The deadline expired with the Echo Core active.']});n.phase='failed';n.message='The station is lost. Echo Core is offline; no timeline restoration is possible.';}
@@ -76,7 +76,7 @@ export function reduce(s:State,c:Command):State {
  case'deliver':n.oxygen='delivered';say(missionLine('line_10'),'You delivered oxygen to Imani.');break;
  case'shutdown':n.core=false;say(missionLine('line_11'),'You shut down the Echo Core.');break;
  case'power':n.route=true;say(missionLine('line_12'),'You powered the medical route.');break;
- case'transfer':n.transfer=s.mode==='demo'?5:20;say(missionLine('line_13'),'You began the medical transfer.');break;
+ case'transfer':n.transfer=s.mode==='demo'?5:12;say(missionLine('line_13'),'You began the medical transfer.');break;
  case'board':n.aboard.push('player');say(missionLine('line_14'));break;
  case'launch':n.phase='won';say(missionLine('line_15'),'All five crew escaped Kestrel Station.');break;
  }

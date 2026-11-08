@@ -6,6 +6,7 @@ import type {Point} from '../game/world';
 import {api} from '../services/api';
 import {envelope,sameAttempt,applyProposal,unavailable,validMemory,type Speaker,type Capabilities,type DialogueResponse} from '../services/contracts';
 import {VoiceChannel,recordingToWav} from '../services/voice';
+import {stationAudio} from '../audio/stationAudio';
 
 type Line={speaker:Speaker;text:string;mode:'live'|'offline'|'fallback';reason?:string|null;evidence:string[];latencyMs:number};
 export function useMissionComms(s:State,dispatch:Dispatch<MissionCommand>,position:RefObject<Point>,playing:boolean,muted:boolean,voiceEnabled:boolean,voiceVolume:number,menuPaused:boolean){
@@ -44,8 +45,8 @@ export function useMissionComms(s:State,dispatch:Dispatch<MissionCommand>,positi
  useEffect(()=>{if(menuPaused&&(recording||microphonePending))cancel();if(menuPaused||muted||!voiceEnabled){voice.current.cancel();setVoiceState('idle')}},[menuPaused,muted,voiceEnabled,recording,microphonePending,cancel]);
  const syncKey=JSON.stringify([s.runId,s.loopId,s.events,s.memory,s.core,s.route,s.aboard,s.bypass===0,s.transfer===0,s.phase]);
  useEffect(()=>{if(!playing||!ready||processing)return;const abort=new AbortController();syncController.current=abort;const timer=setTimeout(()=>{const current=state.current;void api.sync(current,position.current,abort.signal).then(result=>{if(!abort.signal.aborted&&alive.current&&sameAttempt(state.current,envelope(current))){setSaved(true);if(validMemory(result.memory)&&JSON.stringify(result.memory)!==JSON.stringify(state.current.memory))dispatch({type:'hydrate_memory',memory:result.memory})}}).catch(()=>{if(!abort.signal.aborted&&alive.current)setSaved(false)})},300);return()=>{clearTimeout(timer);abort.abort()}},[syncKey,playing,ready,processing,position,dispatch]);
- const play=useCallback((speechId:string|null)=>{const settings=liveSettings.current;if(speechId&&settings.speechAvailable&&settings.voiceEnabled&&!settings.muted&&!settings.menuPaused)void voice.current.play(speechId,settings.voiceVolume,setVoiceState)},[]);
- const deliver=useCallback((result:DialogueResponse)=>{if(!sameAttempt(state.current,result.envelope))return;const received={speaker:result.speaker,text:result.text,mode:result.mode,reason:result.reason,evidence:result.evidence,latencyMs:result.latencyMs};setLine(received);setLastReply(received);play(result.speechId)},[play]);
+ const play=useCallback((speechId:string|null,text:string,speaker:Speaker)=>{const settings=liveSettings.current;if(settings.voiceEnabled&&!settings.muted&&!settings.menuPaused)void voice.current.play(speechId,settings.voiceVolume,setVoiceState,text,speaker,settings.speechAvailable)},[]);
+ const deliver=useCallback((result:DialogueResponse)=>{if(!sameAttempt(state.current,result.envelope))return;const received={speaker:result.speaker,text:result.text,mode:result.mode,reason:result.reason,evidence:result.evidence,latencyMs:result.latencyMs};setLine(received);setLastReply(received);play(result.speechId,result.text,result.speaker)},[play]);
  const send=useCallback(async(text:string,selected:Speaker=speaker)=>{
   if(!text.trim()||submitting.current||state.current.phase!=='playing')return;
   submitting.current=true;const current=state.current;const e=envelope(current);const gen=generation.current;const abort=new AbortController();controller.current=abort;
@@ -67,9 +68,9 @@ export function useMissionComms(s:State,dispatch:Dispatch<MissionCommand>,positi
    if(gen!==generation.current)return;
    // Never claim a successful remote command when the completion receipt was lost.
    const applied=state.current.processed.includes(e.requestId);
-   const fallback:Line={speaker:selected,text:applied?state.current.message.split(' · ').slice(1).join(' · '):reply(state.current,text),mode:'fallback',reason:applied?'The game applied the command; the radio confirmation was interrupted.':'Live radio unavailable. Authored guidance is active.',evidence:applied?['Verified local reducer result']:[],latencyMs:0};setLine(fallback);setLastReply(fallback);
+   const fallback:Line={speaker:selected,text:applied?state.current.message.split(' · ').slice(1).join(' · '):reply(state.current,text),mode:'fallback',reason:applied?'The game applied the command; the radio confirmation was interrupted.':'Live radio unavailable. Authored guidance is active.',evidence:applied?['Verified local reducer result']:[],latencyMs:0};setLine(fallback);setLastReply(fallback);play(null,fallback.text,fallback.speaker);
   }finally{clearTimeout(timer);if(gen===generation.current){submitting.current=false;setProcessing(false);controller.current=null}}
- },[speaker,ready,dispatch,position,deliver]);
+ },[speaker,ready,dispatch,position,deliver,play]);
  const sendRef=useRef(send);sendRef.current=send;
  const startRecording=useCallback(async()=>{
   if(recording||microphonePending||submitting.current)return;
@@ -92,8 +93,9 @@ export function useMissionComms(s:State,dispatch:Dispatch<MissionCommand>,positi
   }catch{stopTracks();if(gen===generation.current){setMicrophonePending(false);setRecording(false);setError('Microphone unavailable or permission denied. Type your message instead.')}}
  },[recording,microphonePending,capabilities.transcription,cancel,stopTracks]);
  const stopRecording=useCallback(()=>{if(recorder.current?.state==='recording')recorder.current.stop()},[]);
- // Authored story lines share the same single speaker channel; their text is approved server-side.
- useEffect(()=>{if(!playing||!ready||!capabilities.speech||!voiceEnabled||muted||menuPaused||processing||recording)return;const key=`${s.loopId}:${s.message}`;if(lastNarrated.current===key)return;lastNarrated.current=key;const [rawSpeaker,...parts]=s.message.split(' · ');if(!['ECHO','MARA','IMANI','SAM'].includes(rawSpeaker))return;const abort=new AbortController();narration.current=abort;void api.sync(state.current,position.current,abort.signal).then(()=>api.narration(envelope(state.current),rawSpeaker as Speaker,parts.join(' · '),abort.signal)).then(result=>{if(!abort.signal.aborted)play(result.speechId)}).catch(()=>{});return()=>abort.abort()},[s.message,s.loopId,playing,ready,capabilities.speech,voiceEnabled,muted,menuPaused,processing,recording,play,position]);
+ useEffect(()=>{stationAudio.setDucking(recording);return()=>{if(recording)stationAudio.setDucking(false)};},[recording]);
+ // Queue authored turns with device speech immediately; ElevenLabs is an optional higher-quality source.
+ useEffect(()=>{if(!playing||!voiceEnabled||muted||menuPaused||processing||recording)return;const key=`${s.loopId}:${s.message}`;if(lastNarrated.current===key)return;const [rawSpeaker,...parts]=s.message.split(' · ');if(!['ECHO','MARA','IMANI','SAM'].includes(rawSpeaker))return;lastNarrated.current=key;const text=parts.join(' · ');if(!capabilities.speech||!ready){play(null,text,rawSpeaker as Speaker);return;}const abort=new AbortController();narration.current=abort;void api.sync(state.current,position.current,abort.signal).then(()=>api.narration(envelope(state.current),rawSpeaker as Speaker,text,abort.signal)).then(result=>{if(!abort.signal.aborted)play(result.speechId,text,rawSpeaker as Speaker)}).catch(()=>{if(!abort.signal.aborted)play(null,text,rawSpeaker as Speaker)});return()=>abort.abort()},[s.message,s.loopId,playing,ready,capabilities.speech,voiceEnabled,muted,menuPaused,processing,recording,play,position]);
  const skipVoice=()=>{voice.current.cancel();setVoiceState('idle')};
  return {capabilities,ready,processing,recording,microphonePending,recordedSeconds,voiceState,error,line,lastReply,speaker,setSpeaker,lastTranscript,saved,send,startRecording,stopRecording,skipVoice,cancel,refresh};
 }

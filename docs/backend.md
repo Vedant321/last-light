@@ -35,9 +35,9 @@ For actions, the server returns a pending proposal. The browser rechecks the cur
 
 ## ElevenLabs, optional
 
-Set `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ECHO` to use spoken radio replies and authored story lines. Optional ENGINEER, MEDIC and PILOT voice IDs give crew distinct voices; missing IDs use the ECHO voice. Use voices available and authorized in your account. `scripts/check_providers.py` lists available IDs.
+Spoken radio already works with device voices. Set `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ECHO` for optional ElevenLabs station replies and authored story lines. Optional ENGINEER, MEDIC and PILOT voice IDs give crew distinct voices; missing IDs use the ECHO voice. Use voices available and authorized in your account. `scripts/check_providers.py` lists available IDs.
 
-The default low-latency TTS model is `eleven_flash_v2_5`, and optional transcription uses `scribe_v2`; both are configurable. Text appears before speech. One interruptible audio channel cancels prior utterances, and reset ignores late audio. Fixed approved story lines share the server's bounded audio cache. The speech endpoint accepts only server-issued utterance IDs, not arbitrary caller text.
+The default low-latency TTS model is `eleven_flash_v2_5`, and optional transcription uses `scribe_v2`; both are configurable. Text appears before speech. One shared queued radio speaks one turn at a time with conversation gaps; resets and chapter changes cancel stale turns. Device speech provides a fallback when optional generated voice fails. Fixed approved story lines share the server's bounded audio cache. The speech endpoint accepts only server-issued utterance IDs, not arbitrary caller text.
 
 Record radio message requests microphone access only when clicked. Browser capture stops at ten seconds, converts to mono 16 kHz PCM WAV, and submits the recording to Python. The server verifies the actual WAV frame count, caps body size, and forwards it to ElevenLabs. Microphone audio is never written to disk or SQLite. Denied permissions and failed transcription retain the Type field. Provider data retention follows the provider/account terms; this application does not claim provider-side zero retention.
 
@@ -94,3 +94,5 @@ A Dockerfile builds the browser and runs Python from the locked environment. Att
 ## Branding and existing saves
 
 The project is named **Kestrel Recall**. Browser settings and discoveries keep their original `last-light-*` storage keys; the session cookie and default SQLite filename also retain their original identifiers so existing local saves survive the rename. These are compatibility identifiers, not displayed branding.
+
+See [audio-and-gemini.md](audio-and-gemini.md) for the short Gemini setup checklist, scenario music, device voices, conversation gaps, volume ducking, and the future player-voice path.

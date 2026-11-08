@@ -23,7 +23,7 @@ export function instruction(s:State):{title:string;detail:string}{const id=nextT
  case'core':return {title:'Return to the Echo Core',detail:'The bypass is ready. Shutdown releases Medical power and ends rewind.'};
  case'power':return {title:'Switch on the Medical route',detail:'Use the blue power panel outside Medical.'};
  case'transfer':return {title:'Get Imani and Eli moving',detail:'Enter Medical and help at the patient’s bedside.'};
- case'shuttle':return {title:s.aboard.includes('player')?'Bring everyone home':'Make your way to the shuttle',detail:s.aboard.includes('player')?(s.aboard.length===5?'Everyone is aboard. You can launch.':'Your crew are on their way. Wait for everyone to board.'):'Follow the lights down to Docking. Your crew will meet you there.'};
+ case'shuttle':return {title:s.aboard.includes('player')?'Launch the rescue shuttle':'Make your way to the shuttle',detail:s.aboard.includes('player')?(s.aboard.length===5?'Everyone is aboard. You can launch.':'Your crew are on their way. Wait for everyone to board.'):'Follow the lights down to Docking. Your crew will meet you there.'};
  default:return {title:'Mara is securing the bypass',detail:'You’ve delivered the oxygen. Watch her progress in Engineering.'};}}
 export function location(p:Point):Place{return p.y>650?'docking':p.x<600?'engineering':p.x>1010?'medical':'hub'}
 const inside=(p:Point,x:number,y:number,w:number,h:number)=>p.x>=x&&p.x<=x+w&&p.y>=y&&p.y<=y+h;

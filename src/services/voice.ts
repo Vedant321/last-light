@@ -1,15 +1,12 @@
 import {api} from './api';
-/** A single interruptible playback channel for authored and generated radio speech. */
+import {radio,type RadioSpeaker} from '../audio/radio';
+/** All narration shares the same queued radio, including browser voices without an account. */
 export class VoiceChannel {
- private controller:AbortController|null=null;
- private audio:HTMLAudioElement|null=null;
- private url:string|null=null;
- private generation=0;
- cancel(){this.generation++;this.controller?.abort();this.controller=null;this.audio?.pause();this.audio=null;if(this.url)URL.revokeObjectURL(this.url);this.url=null}
- async play(speechId:string,volume:number,onState:(state:'loading'|'speaking'|'idle'|'unavailable')=>void){
-  this.cancel();const generation=this.generation;const controller=new AbortController();this.controller=controller;const timeout=setTimeout(()=>controller.abort(),13000);onState('loading');
-  try{const blob=await api.speech(speechId,controller.signal);if(generation!==this.generation)return;this.url=URL.createObjectURL(blob);const audio=new Audio(this.url);this.audio=audio;audio.volume=volume;audio.onended=()=>{if(generation===this.generation){this.cancel();onState('idle')}};audio.onerror=()=>{if(generation===this.generation){this.cancel();onState('unavailable')}};await audio.play();if(generation===this.generation)onState('speaking')}
-  catch{if(generation===this.generation){this.cancel();onState('unavailable')}}finally{clearTimeout(timeout)}
+ private readonly scope=crypto.randomUUID();private unsubscribe:(()=>void)|null=null;
+ cancel(){this.unsubscribe?.();this.unsubscribe=null;radio.cancelScope(this.scope);}
+ async play(speechId:string|null,volume:number,onState:(state:'loading'|'speaking'|'idle'|'unavailable')=>void,text='',speaker:RadioSpeaker='ECHO',providerAvailable=true){
+  this.unsubscribe?.();this.unsubscribe=radio.subscribe(()=>{const state=radio.getSnapshot();onState(state.scope!==this.scope||state.phase==='idle'||state.phase==='gap'?'idle':state.phase==='speaking'?'speaking':'loading');});
+  radio.enqueue({scope:this.scope,speaker,text,volume,replacePending:true,clip:speechId&&providerAvailable?signal=>api.speech(speechId,signal):undefined});
  }
 }
 /** Decode a browser recording and bound it to 10 s of mono 16 kHz PCM WAV. */

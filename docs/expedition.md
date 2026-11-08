@@ -1,6 +1,6 @@
 # Kestrel Recall: one expedition
 
-The playable campaign connects Earth departure, ISS preparation, the Kestrel rescue, and a lunar camera survey. Mars is an ending hook, not an implemented destination. The ISS prologue and all spaceflight are fictional story scenes; the time-restoration emergency remains on fictional Kestrel Station.
+The playable campaign connects Earth departure, ISS preparation, the Kestrel rescue, lunar field exploration, and a return to ISS orbital monitoring. Mars is an ending hook, not an implemented destination. The ISS prologue and all spaceflight are fictional story scenes; the time-restoration emergency remains on fictional Kestrel Station.
 
 ## Story and controls
 
@@ -8,8 +8,8 @@ The playable campaign connects Earth departure, ISS preparation, the Kestrel res
 2. **ISS:** click the power, life-support, and Scout stations. Alex walks to the selected station. Inspect with its button or E after arriving. All three checks unlock departure.
 3. **Kestrel:** the existing eight-minute rescue runs unchanged. All five crew must board, and the Core must be offline before evacuation. The rescue debrief now offers **Continue the expedition**. Returning to the campaign later restarts this chapter with retained rescue discoveries, not an in-flight physical-state save.
 4. **Transfer:** the crew recovers and resupplies before lunar transfer. This deliberate time passage avoids placing the injured Eli straight into another emergency.
-5. **Moon:** Scout-01 acquires two beacons, at −20° and +20°, in each of two passes. Use the slider or left/right keys to issue absolute camera angles. Hold within ±2° for one second; the operator receives confirmation only after downlink delay. Failed or interrupted attempts can be retried. Successful passes unlock the ending.
-6. **Ending:** all crew contribute to the discovery. Actual observed timings are shown, with no guaranteed performance-gain claim. Survey results can be reviewed/exported. A new completed expedition alternates comparison order and target order.
+5. **Moon:** Alex walks with the visible Scout companion, surveys the ridge, and prepares the outpost. The crew leaves Scout gathering observations and returns to the ISS. **ISS watch:** from orbit, Scout-01 acquires two beacons, at −20° and +20°, in each of two passes. Use the slider or left/right keys to issue absolute camera angles. Hold within ±2° for one second; the operator receives confirmation only after downlink delay. Failed or interrupted attempts can be retried. Successful passes unlock the ending.
+6. **Ending:** all crew are safely back at the ISS; Scout remains on the Moon. A continuous local SIM watch keeps receiving delayed camera observations, with the counter scoped to the current visit. All crew contribute to the discovery. Actual observed timings are shown, with no guaranteed performance-gain claim. Survey results can be reviewed/exported. A new completed expedition alternates comparison order and target order.
 
 The camera chapter also offers a PNG download of the returned SIM source frame, without the predictive shift. These are simulated images, not physical camera captures.
 
@@ -37,8 +37,10 @@ The campaign is **SIM only**. Ghost Frame's Arduino sketch, camera diagnostics, 
 - `POST /api/expedition`: bounded, validated checkpoint and survey summaries. Duplicate crew/checks, inconsistent endings, invalid target sequences, fake success timing, and stale same-campaign revisions are rejected.
 - `POST /api/expedition/advice`: read-only ECHO guidance using saved chapter context and explicitly client-reported camera telemetry. Uses the configured Gemini model; otherwise returns labelled authored guidance. No hardware or rescue mutations are available through this route.
 
-Existing guarded station-radio tools remain the way to request rescue actions. New chapter guidance never sits in the camera-control loop. Camera commands and prediction stay local and responsive. The existing optional ElevenLabs integration applies to station radio; new campaign scenes currently use text and synthesized effects.
+Existing guarded station-radio tools remain the way to request rescue actions. New chapter guidance never sits in the camera-control loop. The shared crew radio replaces the floating ECHO chat box, with device narration, scenario music, turn gaps, and speech ducking (see audio-and-gemini.md). Camera commands and prediction stay local and responsive. The existing optional ElevenLabs integration applies to station radio; new campaign scenes use device speech, subtitles, and locally composed music/effects.
 
 ## Verification limits
 
 Automated campaign tests cover progression gates, rescue transition, independent delay boundaries, both views reaching the same targets, delayed confirmation, alternating order, interruption semantics, checkpoint persistence/isolation/staleness, and offline/mocked-live/fallback Gemini guidance. Account-backed Gemini generation and physical hardware remain unverified. Public deployment is unchanged.
+
+Existing schema-v1 saves migrate locally and in SQLite. Completed older lunar comparisons resume at the ISS watch; observations and timing results are retained. New playthroughs must inspect both lunar sites, deploy Scout, and return before remote survey trials unlock. Camera timestamps, delays, adaptive learning, and evaluator rules remain unchanged.

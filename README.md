@@ -2,10 +2,10 @@
 
 > Earth is our starting point. The Moon is our next horizon. Save your crew, remember what matters, and explore through the eyes of Scout.
 
-**Status:** playable Earth → ISS → Kestrel → Moon campaign with Python/FastAPI checkpoints, SQLite memory, guarded Gemini rescue tools, read-only expedition guidance, and Ghost Frame’s adaptive camera simulation. Live provider verification, calibrated hardware integration, and deployment remain pending.\
+**Status:** playable Earth → ISS → Kestrel → Moon → ISS campaign with Python/FastAPI checkpoints, SQLite memory, guarded Gemini rescue tools, read-only expedition guidance, spoken crew radio, scenario music with speech ducking, and Ghost Frame’s adaptive camera simulation. Live provider verification, calibrated hardware integration, and deployment remain pending.\
 **Prepared:** November 8, 2026.\
 **Purpose:** give a coding agent a concrete, staged specification for a playable UB Hacking submission.\
-**Current direction:** Kestrel Recall is one connected expedition: launch from Earth, prepare at the ISS, save the crew at Kestrel, then deploy Scout on the Moon. See [the campaign implementation and Ghost Frame integration](docs/expedition.md). The original station-rescue design below documents the middle chapter; its older one-station scope and return-home ending have been expanded by this campaign.
+**Current direction:** Kestrel Recall is one connected expedition: launch from Earth, prepare at the ISS, save the crew at Kestrel, explore the Moon with Scout, leave it collecting observations, then return to the ISS for remote monitoring. See [the campaign implementation and Ghost Frame integration](docs/expedition.md). The original station-rescue design below documents the middle chapter; its older one-station scope and return-home ending have been expanded by this campaign.
 
 ## 1. Start here, building agent
 

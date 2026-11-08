@@ -2,7 +2,7 @@
 
 KESTREL RECALL story and game brief: project README.
 
-Original top-down vector station, astronaut characters, room props, Earth illustration, interface, and rescue implementation: original project code. No downloaded art, fonts, recordings, or voice likenesses. Impact noise, sirens, interaction cues and the rescue chime are original synthesized Web Audio effects.
+Original top-down vector station, astronaut characters, room props, Earth illustration, interface, and rescue implementation: original project code. No downloaded art, fonts, recordings, or voice likenesses. Impact noise, sirens, interaction cues and the rescue chime are original synthesized Web Audio effects. Scenario music is an original procedural Web Audio score. Device narration uses the browser/OS speech service and available voices; no voice recordings or identities were cloned.
 
 Libraries: React and React DOM (MIT), Three.js (MIT), React Three Fiber (MIT), Vite (MIT), TypeScript (Apache-2.0), tsx (MIT), concurrently (MIT). Dependency license notices remain in their installed packages.
 
